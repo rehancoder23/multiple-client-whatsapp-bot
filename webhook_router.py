@@ -3,7 +3,7 @@ import requests
 import google.generativeai as genai
 
 def get_client_settings(instance_id):
-    """Fetches the specific client's API keys and custom prompt from the database bahi"""
+    """Database se client ki API keys aur prompt nikalne ka function bahi"""
     conn = sqlite3.connect('saas_automation.db')
     cursor = conn.cursor()
     
@@ -17,60 +17,74 @@ def get_client_settings(instance_id):
     conn.close()
     return result
 
-def handle_incoming_whatsapp_webhook(payload):
-    """Main routing controller that maps incoming messages to the correct client bot persona bahi"""
+def send_whatsapp_via_green_api(instance_id, token, to_number, text_message):
+    """Green-API ke zariye customer ko actual WhatsApp message bhejne ka function bahi"""
+    # Green-API ka official message sending URL format bahi
+    url = f"https://api.green-api.com/waInstance{instance_id}/sendMessage/{token}"
     
+    # Payload format jo Green-API accept karta hai bahi
+    payload = {
+        "chatId": f"{to_number.replace('+', '')}@c.us", # Number se '+' hata kar '@c.us' lagana parta hai bahi
+        "message": text_message
+    }
+    headers = {
+        'Content-Type': 'application/json'
+    }
+    
+    try:
+        response = requests.post(url, json=payload, headers=headers)
+        if response.status_code == 200:
+            print(f"✅ Message successfully delivered via Green-API to {to_number} bahi! 🎉")
+        else:
+            print(f"❌ Green-API Error: Status {response.status_code} - {response.text} bahi")
+    except Exception as e:
+        print(f"⚠️ Connection Error while calling Green-API bahi: {e}")
+
+def handle_incoming_whatsapp_webhook(payload):
+    """Main router jo message received hone par chalta hai bahi"""
     instance_id = payload.get("instance_id")
     sender_number = payload.get("sender")
     incoming_message = payload.get("message")
     
-    print(f"\n📥 Incoming Message Received! Instance: {instance_id} | From: {sender_number}")
+    print(f"\n📥 Incoming Message! Instance: {instance_id} | From: {sender_number}")
     
-    # 1. Retrieve the client details from the centralized database
+    # 1. Database se settings nikalte hain bahi
     client_data = get_client_settings(instance_id)
     
     if not client_data:
-        print("⚠️ Error: This WhatsApp Instance ID is not registered in our database bahi!")
+        print("⚠️ Error: Yeh Instance ID register nahi hai bahi!")
         return
     
     gemini_key, system_prompt, whatsapp_token, is_active = client_data
     
-    # 2. Guardrail to check if the client's subscription is active
     if is_active == 0:
-        print("🚫 Access Denied: This client account has been suspended bahi!")
+        print("🚫 Client account suspended bahi!")
         return
     
     try:
-        # 3. Dynamically configure the Google AI API with the client's private key
+        # 2. Gemini 2.0 Flash configuration bahi
         genai.configure(api_key=gemini_key)
-        
-        # 4. FIXED BACKEND MODEL: Upgraded to Gemini 2.0 Flash bahi!
-        # The client does not need to configure this; it is handled automatically.
         model = genai.GenerativeModel(
             model_name="gemini-2.5-flash-lite",
-            system_instruction=system_prompt  # Injecting the client's custom business training rules
+            system_instruction=system_prompt
         )
         
-        # 5. Generate automated AI response
-        print(f"🧠 Processing context via Gemini 2.0 Flash router...")
+        print(f"🧠 Generating response using Gemini 2.0 Flash...")
         response = model.generate_content(incoming_message)
         ai_response = response.text
         
+        # 3. GREEN-API KE ZARIYE CUSTOMER KO JAWAB BHEJ RAHE HAIN BAHI!
+        send_whatsapp_via_green_api(instance_id, whatsapp_token, sender_number, ai_response)
+        
     except Exception as e:
-        print(f"⚠️ Gemini API Engine Error bahi: {e}")
-        ai_response = "We are currently facing high server traffic. Please try again shortly."
-
-    # 6. Dispatch the generated response back to the client's WhatsApp API instance
-    print(f"📤 Dispatching automated reply to {sender_number} via WhatsApp Gateway... Seamless! 🚀")
-    print(f"💬 Generated Response: {ai_response}")
+        print(f"⚠️ Engine Error bahi: {e}")
 
 if __name__ == "__main__":
-    # Simulated webhook testing suite bahi
+    # Test ke liye dummy test code bahi
     fake_webhook_payload = {
-        "instance_id": "instance_test_123",
-        "sender": "+923219999999",
-        "message": "Hello! What are your business operating hours today?"
+        "instance_id": "1101861234",  # Yahan real testing mein client ki Green-API Instance ID aayegi bahi
+        "sender": "+923001234567",
+        "message": "Hello! What is your burger shop timing?"
     }
-    
-    print("--- Testing Dynamic SaaS Webhook Router with Fixed Gemini 2.0 Flash ---")
+    print("--- Running Green-API WhatsApp SaaS Router Suite ---")
     handle_incoming_whatsapp_webhook(fake_webhook_payload)
