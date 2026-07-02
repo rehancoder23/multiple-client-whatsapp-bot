@@ -5,13 +5,13 @@ from email.mime.text import MIMEText
 import google.generativeai as genai
 
 def get_client_settings(instance_id):
-    """Database se client ki API keys, prompt aur EMAIL nikalne ka function bahi"""
+    """Database se client ki keys, prompt, email aur SHOP ADDRESS nikalne ka function bahi"""
     conn = sqlite3.connect('saas_automation.db')
     cursor = conn.cursor()
     
-    # 🟢 Humne query mein client_email ko bhi add kar diya hai bahi!
+    # 🟢 Humne query mein shop_address ko bhi add kar diya hai bahi!
     cursor.execute('''
-        SELECT gemini_api_key, system_prompt, whatsapp_token, is_active, client_email 
+        SELECT gemini_api_key, system_prompt, whatsapp_token, is_active, client_email, shop_address 
         FROM bot_settings 
         WHERE whatsapp_instance_id = ?
     ''', (instance_id,))
@@ -21,7 +21,7 @@ def get_client_settings(instance_id):
     return result
 
 def send_order_email_to_client(client_email, order_details):
-    """Client ki daali hui email par automatic order alert bhejne ka function bahi"""
+    """Client ki email par dynamic order alert bhejne ka function bahi"""
     sender_email = "your_saas_system@gmail.com"  
     sender_password = "your_app_password"        
 
@@ -59,15 +59,14 @@ def handle_incoming_whatsapp_webhook(payload):
     
     print(f"\n📥 Webhook trigger received for Instance: {instance_id}")
     
-    # Database se record fetch ho raha hai bahi
     client_data = get_client_settings(instance_id)
     
     if not client_data:
         print("⚠️ Error: Unregistered Instance ID bahi!")
         return
     
-    # 🟢 Database se client_email dynamic mil gayi bahi!
-    gemini_key, system_prompt, whatsapp_token, is_active, client_email = client_data
+    # 🟢 Database se shop_address bhi dynamic mil gayi bahi!
+    gemini_key, system_prompt, whatsapp_token, is_active, client_email, shop_address = client_data
     
     if is_active == 0:
         print("🚫 Account is suspended bahi!")
@@ -75,17 +74,19 @@ def handle_incoming_whatsapp_webhook(payload):
     
     try:
         genai.configure(api_key=gemini_key)
+        
+        # Shop address ko system instruction ke sath jorh rahe hain bahi taake AI ko shop ka address pata ho!
+        full_instruction = f"{system_prompt}\n\nYour shop/business location address is: {shop_address}"
+        
         model = genai.GenerativeModel(
             model_name="gemini-2.0-flash",
-            system_instruction=system_prompt
+            system_instruction=full_instruction
         )
         
         response = model.generate_content(incoming_message)
         ai_response = response.text
         
-        # 🟢 Check if order pattern matches
         if "[ORDER]" in ai_response:
-            # Ab yeh fixed string par nahi, balki client ki apni dynamic email par jayega bahi!
             send_order_email_to_client(client_email, ai_response)
         
         send_whatsapp_via_green_api(instance_id, whatsapp_token, sender_number, ai_response)
