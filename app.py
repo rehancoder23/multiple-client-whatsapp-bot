@@ -2,13 +2,11 @@ import streamlit as st
 import sqlite3
 from add_client import register_new_client
 
-# Page Title aur UI Formatting bahi
 st.set_page_config(page_title="SaaS Bot Dashboard", page_icon="🤖", layout="wide")
 
 st.title("🚀 Multi-Client WhatsApp AI SaaS Dashboard")
-st.write("Welcome, Rehan Bhai! Apne clients ko yahan se manage aur register karein bahi.")
+st.write("Welcome, Rehan Bhai! Manage and register your clients here smoothly bahi.")
 
-# Ek pyara sa form naye client ke liye bahi
 st.header("➕ Register New Client Business")
 
 with st.form("client_form", clear_on_submit=True):
@@ -18,21 +16,23 @@ with st.form("client_form", clear_on_submit=True):
         username = st.text_input("Username (Unique ID)", placeholder="e.g., burger_king_01")
         business_name = st.text_input("Business / Shop Name", placeholder="e.g., Burger King Pak")
         phone_number = st.text_input("WhatsApp Number", placeholder="e.g., +923001234567")
+        client_email = st.text_input("Client Notification Email", placeholder="e.g., owner@gmail.com")
     
     with col2:
-        instance_id = st.text_input("WhatsApp Instance ID (Evolution/Baileys)", placeholder="instance_123")
-        token = st.text_input("WhatsApp Token / ApiKey", type="password", placeholder="enter token here")
+        instance_id = st.text_input("WhatsApp Instance ID (Green-API)", placeholder="e.g., 1101861234")
+        token = st.text_input("WhatsApp Token / ApiKey", type="password", placeholder="enter green-api token")
         gemini_key = st.text_input("Client's Gemini API Key", type="password", placeholder="AIzaSy...")
         
-    system_prompt = st.text_area("AI System Prompt (Bot Persona)", placeholder="Aap ek burger shop assistant hain...")
+    # 🟢 NAYA INPUT: Client ki apni shop ka address bahi!
+    shop_address = st.text_input("Shop / Business Physical Address", placeholder="e.g., Shop #4, Main Commercial Market, Lahore")
+    system_prompt = st.text_area("AI System Prompt (Bot Persona)", placeholder="You are an AI assistant for a burger shop...")
     
-    submit_btn = st.form_submit_with_rows = st.form_submit_button("🔥 Connect & Activate Bot bahi")
+    submit_btn = st.form_submit_button("🔥 Connect & Activate Bot bahi")
 
-# Jab button dabaein toh database mein data save ho bahi
 if submit_btn:
-    if username and business_name and instance_id and token and gemini_key:
-        # Hum apni 'add_client.py' wali script ka function use kar rahe hain bahi
-        register_new_client(username, business_name, phone_number, instance_id, token, gemini_key, system_prompt)
-        st.success(f"⚡ Makkhan! '{business_name}' ka bot successfully active ho gaya hai bahi! 🎉")
+    if username and business_name and instance_id and token and gemini_key and client_email and shop_address:
+        # Pass shop_address to registration script bahi
+        register_new_client(username, business_name, phone_number, instance_id, token, gemini_key, system_prompt, client_email, shop_address)
+        st.success(f"⚡ Brilliant! '{business_name}' bot is successfully activated bahi! Alerts will go to {client_email} 🎉")
     else:
-        st.error("⚠️ Bahi, saari fields laazmi bharein!")
+        st.error("⚠️ Bahi, please fill in all the fields carefully including the address!")
