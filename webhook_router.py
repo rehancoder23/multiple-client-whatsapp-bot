@@ -1,5 +1,7 @@
 import sqlite3
 import requests
+import smtplib
+from email.mime.text import MIMEText
 import google.generativeai as genai
 
 def get_client_settings(instance_id):
@@ -17,28 +19,43 @@ def get_client_settings(instance_id):
     conn.close()
     return result
 
+def send_order_email_to_client(client_email, order_details):
+    """Client ko naye order ki email automatic bhejne ka function bahi"""
+    sender_email = "your_saas_system@gmail.com"  # Aapki main system email bahi
+    sender_password = "your_app_password"        # Gmail ka App Password bahi
+
+    # Email ka content set kar rahe hain bahi
+    msg = MIMEText(f"Hello Client! \n\nA new order has been placed via WhatsApp Bot:\n\n{order_details}\n\nPlease prepare the order bahi!")
+    msg['Subject'] = '🚨 New WhatsApp Order Received!'
+    msg['From'] = sender_email
+    msg['To'] = client_email
+
+    try:
+        # Gmail SMTP server se connect kar rahe hain bahi
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+            server.login(sender_email, sender_password)
+            server.sendmail(sender_email, client_email, msg.as_string())
+        print(f"📧 Notification Email successfully sent to client ({client_email}) bahi! 🎉")
+    except Exception as e:
+        print(f"⚠️ Email sending failed bahi: {e}")
+
 def send_whatsapp_via_green_api(instance_id, token, to_number, text_message):
     """Green-API ke zariye customer ko actual WhatsApp message bhejne ka function bahi"""
-    # Green-API ka official message sending URL format bahi
     url = f"https://api.green-api.com/waInstance{instance_id}/sendMessage/{token}"
-    
-    # Payload format jo Green-API accept karta hai bahi
     payload = {
-        "chatId": f"{to_number.replace('+', '')}@c.us", # Number se '+' hata kar '@c.us' lagana parta hai bahi
+        "chatId": f"{to_number.replace('+', '')}@c.us",
         "message": text_message
     }
-    headers = {
-        'Content-Type': 'application/json'
-    }
+    headers = {'Content-Type': 'application/json'}
     
     try:
         response = requests.post(url, json=payload, headers=headers)
         if response.status_code == 200:
-            print(f"✅ Message successfully delivered via Green-API to {to_number} bahi! 🎉")
+            print(f"✅ Message successfully delivered via Green-API to {to_number} bahi!")
         else:
-            print(f"❌ Green-API Error: Status {response.status_code} - {response.text} bahi")
+            print(f"❌ Green-API Error: {response.text} bahi")
     except Exception as e:
-        print(f"⚠️ Connection Error while calling Green-API bahi: {e}")
+        print(f"⚠️ Connection Error: {e} bahi")
 
 def handle_incoming_whatsapp_webhook(payload):
     """Main router jo message received hone par chalta hai bahi"""
@@ -48,7 +65,6 @@ def handle_incoming_whatsapp_webhook(payload):
     
     print(f"\n📥 Incoming Message! Instance: {instance_id} | From: {sender_number}")
     
-    # 1. Database se settings nikalte hain bahi
     client_data = get_client_settings(instance_id)
     
     if not client_data:
@@ -62,10 +78,9 @@ def handle_incoming_whatsapp_webhook(payload):
         return
     
     try:
-        # 2. Gemini 2.0 Flash configuration bahi
         genai.configure(api_key=gemini_key)
         model = genai.GenerativeModel(
-            model_name="gemini-2.5-flash-lite",
+            model_name="gemini-2.0-flash",
             system_instruction=system_prompt
         )
         
@@ -73,18 +88,25 @@ def handle_incoming_whatsapp_webhook(payload):
         response = model.generate_content(incoming_message)
         ai_response = response.text
         
-        # 3. GREEN-API KE ZARIYE CUSTOMER KO JAWAB BHEJ RAHE HAIN BAHI!
+        # 🟢 CHECK KARTE HAIN KE KYA AI NE ORDER RECOGNIZE KIYA HAI BAHI?
+        if "[ORDER]" in ai_response:
+            # Fake testing ke liye hum abhi ek static email address par notifications bhej rahe hain bahi
+            test_client_email = "client_test_email@gmail.com" 
+            send_order_email_to_client(test_client_email, ai_response)
+        
+        # Green-API se reply WhatsApp par bhejte hain bahi
         send_whatsapp_via_green_api(instance_id, whatsapp_token, sender_number, ai_response)
         
     except Exception as e:
         print(f"⚠️ Engine Error bahi: {e}")
 
 if __name__ == "__main__":
-    # Test ke liye dummy test code bahi
+    # Test karne ke liye ek fake payload chalate hain bahi
+    # Is baar payload aisa bhejenge ke Gemini order detect kare bahi!
     fake_webhook_payload = {
-        "instance_id": "1101861234",  # Yahan real testing mein client ki Green-API Instance ID aayegi bahi
+        "instance_id": "1101861234",
         "sender": "+923001234567",
-        "message": "Hello! What is your burger shop timing?"
+        "message": "Mera order confirm kar do bahi, 2 Zinger burger chahiye!"
     }
-    print("--- Running Green-API WhatsApp SaaS Router Suite ---")
+    print("--- Running Green-API WhatsApp SaaS Router with Order Email System ---")
     handle_incoming_whatsapp_webhook(fake_webhook_payload)
