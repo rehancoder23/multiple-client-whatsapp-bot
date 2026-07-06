@@ -2,13 +2,16 @@ import streamlit as st
 import sqlite3
 from add_client import register_new_client
 
+# Page configuration
 st.set_page_config(page_title="SaaS Bot Dashboard", page_icon="🤖", layout="wide")
 
+# Main Title & Subtitle bahi
 st.title("🚀 Multi-Client WhatsApp AI SaaS Dashboard")
-st.write("Welcome, Rehan Bhai! Manage and register your clients here smoothly bahi.")
+st.write("Welcome! Register your business here to activate your automated WhatsApp AI bot bahi.")
 
 st.header("➕ Register New Client Business")
 
+# Main Registration Form bahi
 with st.form("client_form", clear_on_submit=True):
     col1, col2 = st.columns(2)
     
@@ -28,48 +31,10 @@ with st.form("client_form", clear_on_submit=True):
     
     submit_btn = st.form_submit_button("🔥 Connect & Activate Bot bahi")
 
+# Form submission logic bahi
 if submit_btn:
     if username and business_name and instance_id and token and gemini_key and client_email and shop_address:
         register_new_client(username, business_name, phone_number, instance_id, token, gemini_key, system_prompt, client_email, shop_address)
         st.success(f"⚡ Brilliant! '{business_name}' bot is successfully activated bahi! Alerts will go to {client_email} 🎉")
     else:
         st.error("⚠️ Bahi, please fill in all the fields carefully including the address!")
-
-
-# 👑 --- ADMIN CONTROL SECTION (ONLY FOR REHAN BHAI) ---
-st.markdown("<br><hr>", unsafe_allow_html=True)
-st.header("👑 Admin Control Panel (Owner View Only)")
-
-# Password field bahi
-admin_password = st.text_input("Enter Admin Password to view registered clients bahi", type="password")
-
-if admin_password == "rehan_malik_786":  # Aapka secret password bahi!
-    st.subheader("📊 Registered Clients Log")
-    try:
-        conn = sqlite3.connect('saas_automation.db')
-        cursor = conn.cursor()
-        
-        # Check kar rahe hain ke table bani hui hai ya nahi bahi
-        cursor.execute('''
-            SELECT name FROM sqlite_master WHERE type='table' AND name='bot_settings'
-        ''')
-        table_exists = cursor.fetchone()
-        
-        if table_exists:
-            cursor.execute("SELECT username, business_name, whatsapp_number, client_email, shop_address FROM bot_settings")
-            data = cursor.fetchall()
-            conn.close()
-            
-            if data:
-                # Loop chala kar client ka data saaf saaf dikhana bahi
-                for row in data:
-                    with st.expander(f"🏢 Client: {row[1]} ({row[0]})"):
-                        st.write(f"**📞 WhatsApp:** {row[2]}")
-                        st.write(f"**📧 Email:** {row[3]}")
-                        st.write(f"**📍 Address:** {row[4]}")
-            else:
-                st.info("Bahi, abhi tak koi client register nahi hua database mein.")
-        else:
-            st.info("Bahi, abhi tak database table create nahi hui.")
-    except Exception as e:
-        st.error(f"Database read error bahi: {e}")
