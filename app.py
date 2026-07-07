@@ -5,7 +5,7 @@ from add_client import register_new_client
 # Sidebar ko chhupane ke liye configuration bahi
 st.set_page_config(page_title="SaaS Bot Dashboard", page_icon="🤖", layout="wide", initial_sidebar_state="collapsed")
 
-# CSS se sidebar ka button bhi bilkul gayab kar rahe hain bahi!
+# CSS se sidebar ka button aur arrow bilkul gayab kar rahe hain bahi!
 st.markdown("""
     <style>
         [data-testid="stSidebarNav"] {display: none !important;}
@@ -18,6 +18,7 @@ st.write("Welcome! Register your business here to activate your automated WhatsA
 
 st.header("➕ Register New Client Business")
 
+# Main Registration Form bahi
 with st.form("client_form", clear_on_submit=True):
     col1, col2 = st.columns(2)
     
@@ -37,6 +38,7 @@ with st.form("client_form", clear_on_submit=True):
     
     submit_btn = st.form_submit_button("🔥 Connect & Activate Bot bahi")
 
+# Form submission logic bahi
 if submit_btn:
     if username and business_name and instance_id and token and gemini_key and client_email and shop_address:
         register_new_client(username, business_name, phone_number, instance_id, token, gemini_key, system_prompt, client_email, shop_address)
@@ -44,16 +46,20 @@ if submit_btn:
     else:
         st.error("⚠️ Bahi, please fill in all the fields carefully including the address!")
 
-# --- KHUFIA BUTTON JALSA ---
+
+# --- KHUFIA BUTTON JALSA (100% SECURE FOR REHAN BHAI) ---
 st.markdown("<br><br><hr>", unsafe_allow_html=True)
 
-# Password check dashboard par hi hoga, sahi hua toh page change bahi!
 admin_pass = st.text_input("🔑 Owner Login (Khufia Section) bahi", type="password")
 if admin_pass:
-    correct_password = st.secrets.get("ADMIN_PASSWORD", "rehan_malik_786")
-    if admin_pass == correct_password:
+    # Code mein koi password nahi hai bahi, yeh seedha Streamlit Secrets se uthaega!
+    correct_password = st.secrets.get("ADMIN_PASSWORD")
+    
+    if correct_password is None:
+        st.error("⚠️ Rehan bhai, aapne Streamlit Cloud ke Secrets mein password set nahi kiya bahi!")
+    elif admin_pass == correct_password:
         st.success("Password Match! Opening Admin Panel... 👑")
-        # Daraz style mein naya page open bahi!
+        # Daraz style mein page shift bahi!
         st.switch_page("pages/Admin_Panel.py")
     else:
         st.error("❌ Galat password hai bahi!")
