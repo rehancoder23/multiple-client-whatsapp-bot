@@ -59,7 +59,7 @@ if admin_pass:
         st.error("⚠️ Rehan bhai, aapne Streamlit Cloud ke Secrets mein password set nahi kiya bahi!")
     elif admin_pass == correct_password:
         st.success("Password Match! Opening Admin Panel... 👑")
-        # Daraz style mein page shift bahi!
-        st.switch_page("pages/Admin_Panel.py")
+        # 🎯 FIXED: Yahan se 'pages/' hata diya hai taake error na aaye bahi!
+        st.switch_page("Admin_Panel.py")
     else:
         st.error("❌ Galat password hai bahi!")
