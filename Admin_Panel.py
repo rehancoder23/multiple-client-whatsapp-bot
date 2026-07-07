@@ -16,6 +16,7 @@ st.write("Welcome Rehan Bhai! Yahan aapka sara registered data safe hai bahi.")
 
 # Wapas homepage par jane ka button bahi
 if st.button("⬅️ Back to Registration Form bahi"):
+    # app.py main directory mein hai isliye yeh bilkul sahi hai bahi
     st.switch_page("app.py")
 
 st.subheader("📊 Registered Clients Log")
