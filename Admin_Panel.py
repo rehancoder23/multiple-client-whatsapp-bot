@@ -12,9 +12,9 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.title("👑 Admin Control Panel (Owner View Only) bahi")
-st.write("Welcome Rehan Bhai! Yahan aapka sara data safe hai bahi.")
+st.write("Welcome Rehan Bhai! Yahan aapka sara registered data safe hai bahi.")
 
-# Wapas jane ka button bahi
+# Wapas homepage par jane ka button bahi
 if st.button("⬅️ Back to Registration Form bahi"):
     st.switch_page("app.py")
 
